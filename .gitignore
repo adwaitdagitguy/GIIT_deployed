@@ -1,4 +1,4 @@
-# Python & virtual environment (prevents committing your local venv and bytecode)
+# Python & virtual environment
 .venv/
 venv/
 env/
@@ -11,7 +11,7 @@ __pycache__/
 .coverage
 htmlcov/
 
-# Node & Frontend (prevents committing gigabytes of node packages and build output)
+# Node & Frontend
 frontend/node_modules/
 node_modules/
 frontend/dist/
@@ -19,7 +19,7 @@ dist/
 .npm/
 .eslintcache
 
-# Environment / Secret variables (keeps API keys like OpenRouter/Ngrok safe)
+# Environment / Secret variables
 .env
 .env.local
 .env.*.local
@@ -37,7 +37,7 @@ $RECYCLE.BIN/
 *.sublime-project
 *.sublime-workspace
 
-# LaTeX temporary compilation files (keeps git clean when compiling report.tex)
+# LaTeX temporary compilation files
 *.aux
 *.log
 *.out
@@ -57,3 +57,4 @@ $RECYCLE.BIN/
 tmp/
 *.tmp
 *.log
+
