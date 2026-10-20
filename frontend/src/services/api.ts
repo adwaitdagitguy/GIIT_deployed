@@ -17,12 +17,15 @@ import {
   mockMappingList
 } from '../mocks/fixtures'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://slick-cotton-unjustly.ngrok-free.dev'
 const FORCE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true'
 
 const client = axios.create({
   baseURL: API_BASE,
   timeout: 45000,
+  headers: {
+    'ngrok-skip-browser-warning': 'true',
+  }
 })
 
 export const api = {
