@@ -74,8 +74,8 @@ const typeStyles: Record<
   }
 }
 
-export const PhysicsNode = memo(({ data, selected }: NodeProps<any>) => {
-  const nodeData = data as PhysicsNodeData
+export const PhysicsNode = memo(({ data, selected }: NodeProps) => {
+  const nodeData = data as unknown as PhysicsNodeData
   const nodeType = nodeData.type || 'intermediate'
   const style = typeStyles[nodeType] || typeStyles.intermediate
 

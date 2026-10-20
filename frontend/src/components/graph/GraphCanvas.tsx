@@ -8,6 +8,7 @@ import {
   useEdgesState,
   Node,
   Edge,
+  NodeTypes,
   MarkerType,
   BackgroundVariant
 } from '@xyflow/react'
@@ -15,7 +16,7 @@ import { useWorkbenchStore } from '../../store/workbenchStore'
 import { PhysicsNode } from './PhysicsNode'
 import { Network, Play, Info } from 'lucide-react'
 
-const nodeTypes = {
+const nodeTypes: NodeTypes = {
   physicsNode: PhysicsNode
 }
 

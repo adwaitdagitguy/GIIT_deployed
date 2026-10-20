@@ -28,14 +28,19 @@ export const AnalyticsDock: React.FC = () => {
     interventionStrength
   } = useWorkbenchStore()
 
-  const tabs = [
+  const tabs: Array<{
+    id: string
+    label: string
+    icon: typeof Activity
+    badge?: string
+  }> = [
     { id: 'trajectory', label: 'Trajectory Comparison', icon: Activity, badge: interventionResult ? 'Live' : undefined },
     { id: 'metrics', label: 'Error & Loss Metrics', icon: BarChart2 },
     { id: 'sensitivity', label: 'Physics Sensitivity', icon: Gauge },
     { id: 'mapping', label: 'Node → Layer Mapping', icon: Network },
     { id: 'sweep', label: 'Parameter Sweep Curve', icon: LineChart, badge: sweepResult ? 'Done' : undefined },
     { id: 'assistant', label: 'AI Physics Assistant', icon: Sparkles }
-  ] as const
+  ]
 
   return (
     <div className="h-72 bg-slate-900/90 border-t border-slate-800 flex flex-col select-none backdrop-blur-md shadow-2xl z-20">
