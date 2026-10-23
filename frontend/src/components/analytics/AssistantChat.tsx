@@ -168,10 +168,13 @@ export const AssistantChat: React.FC = () => {
 
     setIsSending(true)
     try {
-      const historyPayload = chatMessages.slice(-6).map((m) => ({
-        role: m.role,
-        content: m.content
-      }))
+      const historyPayload = chatMessages
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .slice(-6)
+        .map((m) => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content
+        }))
       const { reply } = await api.askAssistant({
         sessionId,
         apiKey: openRouterApiKey,

@@ -410,7 +410,7 @@ export const api = {
     sessionId: string | null
     apiKey: string
     message: string
-    history: { role: 'user' | 'assistant'; content: string }[]
+    history: { role: 'user' | 'assistant' | 'system'; content: string }[]
     context: Record<string, any>
   }): Promise<{ reply: string; model: string }> {
     const cleanKey = params.apiKey.trim()
