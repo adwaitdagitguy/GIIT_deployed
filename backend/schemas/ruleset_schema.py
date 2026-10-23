@@ -32,3 +32,20 @@ class RulesetGenerateResponse(BaseModel):
     quantities: list[str]   # names of quantities generated
     ruleset: dict           # the full ruleset dict for download / preview
     attached: bool
+
+
+class AssistantChatRequest(BaseModel):
+    """Body for POST /api/assistant/chat."""
+
+    session_id: Optional[str] = None
+    api_key: str
+    message: str
+    history: Optional[list[dict]] = None
+    context: Optional[dict] = None
+
+
+class AssistantChatResponse(BaseModel):
+    """Returned by POST /api/assistant/chat."""
+
+    reply: str
+    model: str

@@ -33,6 +33,7 @@ class ReactFlowEdge(BaseModel):
     id: str
     source: str
     target: str
+    label: Optional[str] = ""
     animated: bool = False
 
 

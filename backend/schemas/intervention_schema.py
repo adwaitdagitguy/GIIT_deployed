@@ -42,10 +42,15 @@ class InterventionRunResponse(BaseModel):
     intervened_mse: float
     mse_delta: float
     mse_percent_change: float
+    x_values: Optional[list[float]] = None
     trajectory_baseline: list[float]
     trajectory_intervened: list[float]
+    trajectory_ground_truth: Optional[list[float]] = None
     trajectory_variance: float
     trajectory_mean_deviation: float
+    max_divergence: Optional[float] = None
+    rmse: Optional[float] = None
+    mae: Optional[float] = None
 
 
 # ── /api/intervention/sweep ───────────────────────────────────────────────────
@@ -72,6 +77,7 @@ class SweepStepResult(BaseModel):
     trajectory_intervened: list[float]
     trajectory_variance: float
     trajectory_mean_deviation: float
+    max_divergence: Optional[float] = None
 
 
 class InterventionSweepResponse(BaseModel):
@@ -157,6 +163,7 @@ class FullAnalysisRequest(BaseModel):
 
 class SensitivityEntry(BaseModel):
     label: str
+    symbol: Optional[str] = None
     value: float
     gradient: float
     computed_sign: str

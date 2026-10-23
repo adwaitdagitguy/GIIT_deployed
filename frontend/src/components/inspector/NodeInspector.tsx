@@ -1,40 +1,57 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useWorkbenchStore } from '../../store/workbenchStore'
 import {
   Info,
-  Layers,
-  HelpCircle,
   TrendingUp,
-  Activity,
-  Sliders,
-  CheckCircle2,
-  Atom
+  Atom,
+  ChevronDown,
+  ChevronUp,
+  PanelRightClose
 } from 'lucide-react'
 
 export const NodeInspector: React.FC = () => {
-  const { graph, selectedNodeId } = useWorkbenchStore()
+  const { graph, selectedNodeId, setRightPanelOpen } = useWorkbenchStore()
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
   if (!graph) return null
 
   const selectedNode = graph.nodes.find((n) => n.id === selectedNodeId)
 
   return (
-    <div className="p-3.5 space-y-3 bg-slate-900/40 border-b border-slate-800 select-none">
+    <div className="p-3.5 space-y-3 bg-slate-900/40 select-none">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Atom className="w-4 h-4 text-cyan-400" />
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200">
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="flex items-center gap-2 text-left cursor-pointer group"
+          title={isCollapsed ? "Expand Node Inspector" : "Collapse Node Inspector"}
+        >
+          <Atom className="w-4 h-4 text-cyan-400 shrink-0" />
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 group-hover:text-cyan-300 transition-colors">
             Node Inspector
           </h3>
+          {isCollapsed ? (
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-300" />
+          ) : (
+            <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-300" />
+          )}
+        </button>
+        <div className="flex items-center gap-1.5">
+          {selectedNode && (
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-700">
+              {selectedNode.id}
+            </span>
+          )}
+          <button
+            onClick={() => setRightPanelOpen(false)}
+            className="p-1 text-slate-400 hover:text-cyan-300 hover:bg-slate-800 rounded transition-colors cursor-pointer"
+            title="Hide Right Panel"
+          >
+            <PanelRightClose className="w-3.5 h-3.5" />
+          </button>
         </div>
-        {selectedNode && (
-          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-700">
-            {selectedNode.id}
-          </span>
-        )}
       </div>
 
-      {selectedNode ? (
+      {!isCollapsed && (selectedNode ? (
         <div className="space-y-2.5">
           {/* Node Title & Symbol */}
           <div className="flex items-start justify-between gap-2 p-2 rounded-lg bg-slate-950/70 border border-slate-800">
@@ -105,7 +122,7 @@ export const NodeInspector: React.FC = () => {
           <p className="text-xs text-slate-400">Click any node in the graph</p>
           <p className="text-[10px] text-slate-600">Inspect physical formulas and ODE relations</p>
         </div>
-      )}
+      ))}
     </div>
   )
 }

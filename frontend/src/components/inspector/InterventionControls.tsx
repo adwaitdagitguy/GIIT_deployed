@@ -1,19 +1,17 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useWorkbenchStore } from '../../store/workbenchStore'
 import { api } from '../../services/api'
 import { InterventionType } from '../../types/api'
 import {
-  Sliders,
   Zap,
   Play,
-  RotateCw,
-  Gauge,
-  ShieldAlert,
-  Flame,
-  LineChart
+  LineChart,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react'
 
 export const InterventionControls: React.FC = () => {
+  const [isCollapsed, setIsCollapsed] = useState(false)
   const {
     sessionId,
     modelMetadata,
@@ -34,7 +32,7 @@ export const InterventionControls: React.FC = () => {
 
   const availableLayers = modelMetadata?.perturbableTensors?.length
     ? modelMetadata.perturbableTensors
-    : ['fcs.0.weight', 'fch.0.weight', 'fch.1.weight', 'fce.0.weight']
+    : []
 
   // Run single intervention
   const handleRunIntervention = async () => {
@@ -82,18 +80,29 @@ export const InterventionControls: React.FC = () => {
   return (
     <div className="p-3.5 space-y-3.5 bg-slate-900/40 select-none">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Zap className="w-4 h-4 text-amber-400" />
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200">
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="flex items-center gap-2 text-left cursor-pointer group"
+          title={isCollapsed ? "Expand Intervention Studio" : "Collapse Intervention Studio"}
+        >
+          <Zap className="w-4 h-4 text-amber-400 shrink-0" />
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200 group-hover:text-amber-300 transition-colors">
             Intervention Studio
           </h3>
-        </div>
+          {isCollapsed ? (
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-300" />
+          ) : (
+            <ChevronUp className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-300" />
+          )}
+        </button>
         <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
           Perturbation
         </span>
       </div>
 
-      {/* Target Neural Layer */}
+      {!isCollapsed && (
+        <>
+          {/* Target Neural Layer */}
       <div className="space-y-1">
         <label className="text-[11px] font-semibold text-slate-300 flex items-center justify-between">
           <span>Target PINN Layer:</span>
@@ -102,13 +111,18 @@ export const InterventionControls: React.FC = () => {
         <select
           value={selectedLayer}
           onChange={(e) => setSelectedLayer(e.target.value)}
-          className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 font-mono"
+          disabled={availableLayers.length === 0}
+          className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 font-mono disabled:opacity-50"
         >
-          {availableLayers.map((layer) => (
-            <option key={layer} value={layer}>
-              {layer}
-            </option>
-          ))}
+          {availableLayers.length === 0 ? (
+            <option value="">No model loaded</option>
+          ) : (
+            availableLayers.map((layer) => (
+              <option key={layer} value={layer}>
+                {layer}
+              </option>
+            ))
+          )}
         </select>
       </div>
 
@@ -215,6 +229,8 @@ export const InterventionControls: React.FC = () => {
           )}
         </button>
       </div>
+        </>
+      )}
     </div>
   )
 }

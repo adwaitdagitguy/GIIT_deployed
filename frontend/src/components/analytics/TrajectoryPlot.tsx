@@ -1,7 +1,8 @@
 import React from 'react'
 import Plot from 'react-plotly.js'
 import { TrajectoryData } from '../../types/api'
-import { Activity, Play } from 'lucide-react'
+import { useWorkbenchStore } from '../../store/workbenchStore'
+import { Activity } from 'lucide-react'
 
 interface TrajectoryPlotProps {
   data: TrajectoryData | null
@@ -12,10 +13,20 @@ interface TrajectoryPlotProps {
 
 export const TrajectoryPlot: React.FC<TrajectoryPlotProps> = ({
   data,
-  layerName = "fch.0.weight",
+  layerName = "",
   interventionType = "noise",
-  strength = 0.35
+  strength = 0.0
 }) => {
+  const { graph } = useWorkbenchStore()
+
+  const axisLabels = graph?.metadata?.axis_labels
+  const xAxisTitle = axisLabels
+    ? `${axisLabels.x_label}${axisLabels.x_unit ? ` [${axisLabels.x_unit}]` : ''}`
+    : graph?.metadata?.pinn_input || 'Input Coordinate'
+  const yAxisTitle = axisLabels
+    ? `${axisLabels.y_label}${axisLabels.y_unit ? ` [${axisLabels.y_unit}]` : ''}`
+    : graph?.metadata?.pinn_output || 'Model Output'
+
   if (!data || !data.xValues || data.xValues.length === 0) {
     return (
       <div className="h-full w-full flex flex-col items-center justify-center text-slate-500 p-6 text-center select-none">
@@ -87,14 +98,14 @@ export const TrajectoryPlot: React.FC<TrajectoryPlotProps> = ({
             font: { color: '#94a3b8', size: 10 }
           },
           xaxis: {
-            title: { text: 'Time (t) [s]', font: { color: '#94a3b8', size: 10 } },
+            title: { text: xAxisTitle, font: { color: '#94a3b8', size: 10 } },
             color: '#94a3b8',
             gridcolor: 'rgba(51, 65, 85, 0.4)',
             zerolinecolor: 'rgba(51, 65, 85, 0.7)',
             tickfont: { size: 9 }
           },
           yaxis: {
-            title: { text: 'Displacement y(t) [m]', font: { color: '#94a3b8', size: 10 } },
+            title: { text: yAxisTitle, font: { color: '#94a3b8', size: 10 } },
             color: '#94a3b8',
             gridcolor: 'rgba(51, 65, 85, 0.4)',
             zerolinecolor: 'rgba(51, 65, 85, 0.7)',

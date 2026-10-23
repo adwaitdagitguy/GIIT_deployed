@@ -985,7 +985,23 @@ The notable UI improvements include the following:
     \item \textbf{AI-Assisted Ruleset Generation \& Guided Onboarding}: Integrated an LLM-powered ruleset generator (via OpenRouter) directly into the sidebar to automatically extract governing equations and construct causal graph JSON schemas from uploaded PyTorch model code. Additionally, implemented a 5-step interactive \textit{Guided Tour}, a live backend health heartbeat indicator with automatic mock-mode fallback, and one-click demo loading for immediate testing.
 \end{itemize}
 \subsection{Deployment}
+To enable public accessibility, low-latency client interaction, and accelerated scientific computation, the GIIT Phase 4 system is deployed using a decoupled, hybrid cloud-computing architecture:
+
+\begin{enumerate}
+    \item \textbf{Frontend Deployment on Vercel}:
+    The React 18 / TypeScript Single-Page Application (SPA) is built with Vite and deployed on Vercel's global Edge Network. This static build tier provides high availability, CDN edge caching, and responsive UI rendering. Configuration variables (\texttt{VITE\_API\_BASE\_URL} and \texttt{VITE\_USE\_MOCKS}) allow seamless routing between live backend servers and realistic offline physics mock modes.
+
+    \item \textbf{GPU-Accelerated Backend Compute Tier}:
+    The Python FastAPI backend is hosted on a cloud GPU instance (e.g., Google Colab with an NVIDIA Tesla T4 GPU, 16~GB VRAM). The backend runtime auto-detects CUDA hardware and migrates neural models, test inputs, autograd graph evaluations, and perturbation tensors directly into GPU memory. This hardware acceleration drastically reduces the execution time of repeated perturbation replicates (100 replicates), higher-order PDE residual autograd computations, and multi-seed sweeps from tens of seconds on CPU down to sub-second latencies.
+
+    \item \textbf{Secure Reverse Tunneling}:
+    The Colab-hosted FastAPI server binds to port 8000 and is securely exposed to the external web via a reverse tunnel (Ngrok / Cloudflare Tunnel) over HTTPS. Cross-Origin Resource Sharing (CORS) middleware configured in \texttt{main.py} permits cross-origin requests from the Vercel frontend, and client-side bypass headers (\texttt{ngrok-skip-browser-warning}) ensure frictionless API communication.
+
+    \item \textbf{Continuous Heartbeat and Fault Tolerance}:
+    The frontend continuously monitors backend availability via periodic health-check heartbeats (\texttt{GET /}). If the cloud GPU instance disconnects or exceeds timeout thresholds, the client interface automatically degrades gracefully to an in-browser physics simulation engine, ensuring uninterrupted usability during live demonstrations.
+\end{enumerate}
 \subsection{Training on Burgers with independent seeds}
+
 \subsection{A new case study}
 
 

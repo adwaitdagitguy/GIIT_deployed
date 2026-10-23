@@ -33,7 +33,7 @@ import requests
 # ══════════════════════════════════════════════════════════════════════════════
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
-DEFAULT_MODEL = "google/gemma-4-31b-it"
+DEFAULT_MODEL = "openrouter/free"
 MAX_RETRIES = 3
 RETRY_DELAY_SECONDS = 2
 
@@ -731,14 +731,19 @@ def generate_physics_ruleset(
     Returns:
         The parsed ruleset dict.
     """
-    expected_trends = graph.get("expected_trends", {})
+    expected_trends = dict(graph.get("expected_trends", {}) or {})
     metadata = graph.get("metadata", {})
     input_spec = graph.get("input_spec", {})
     output_spec = graph.get("output_spec", {})
 
     if not expected_trends:
+        for sym, pinfo in (graph.get("parameters", {}) or {}).items():
+            if isinstance(pinfo, dict) and pinfo.get("trend"):
+                expected_trends[pinfo.get("label", sym)] = pinfo["trend"]
+
+    if not expected_trends:
         raise ValueError(
-            "graph.json has no 'expected_trends'. Cannot suggest rules without trends."
+            "graph.json has no 'expected_trends' or parameter 'trend' fields."
         )
 
     if verbose:
@@ -888,6 +893,47 @@ def _print_ruleset_summary(ruleset: dict):
     for qname, qinfo in quantities.items():
         print(f"    [{qname:15s}]  method={qinfo.get('method', '?'):20s}  trend_key={qinfo.get('trend_key', '?')}")
         print(f"      -> {qinfo.get('description', '')[:70]}")
+
+
+def chat_with_physics_assistant(
+    user_message: str,
+    api_key: str,
+    context: dict = None,
+    history: list = None,
+    model_name: str = DEFAULT_MODEL,
+) -> str:
+    """
+    Answer user questions about the loaded PINN model, physics graph,
+    autograd sensitivities, node-to-layer mappings, and interventions
+    using OpenRouter (`openrouter/free` by default).
+    """
+    context_json = json.dumps(context or {}, indent=2, default=str)
+    system_prompt = (
+        "You are the AI Physics Assistant inside the GIIT (Graph-Based Inspection and "
+        "Intervention Tool for SciML) workbench.\n"
+        "Use the active PINN session context below (governing PDE/ODE equation, causal "
+        "graph nodes/edges, autograd sensitivity signs, node-to-layer mappings, and "
+        "latest layer intervention metrics) to give concise, scientifically accurate "
+        "answers.\n\n"
+        f"ACTIVE WORKBENCH CONTEXT:\n{context_json}"
+    )
+
+    messages = [{"role": "system", "content": system_prompt}]
+    if history:
+        for msg in history[-6:]:
+            role = msg.get("role", "user")
+            content = msg.get("content", "")
+            if role in ("user", "assistant") and content:
+                messages.append({"role": role, "content": content})
+    messages.append({"role": "user", "content": user_message})
+
+    return _call_openrouter(
+        messages=messages,
+        api_key=api_key,
+        model=model_name,
+        temperature=0.2,
+        max_tokens=1024,
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════

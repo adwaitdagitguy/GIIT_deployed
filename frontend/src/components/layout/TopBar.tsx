@@ -8,7 +8,9 @@ import {
   Wifi,
   WifiOff,
   PlayCircle,
-  HelpCircle,
+  PanelLeft,
+  PanelRight,
+  PanelBottom,
   Cpu
 } from 'lucide-react'
 
@@ -18,11 +20,15 @@ export const TopBar: React.FC = () => {
     modelMetadata,
     backendConnected,
     setBackendConnected,
-    isMockMode,
-    setIsMockMode,
     loadDemoModel,
     resetWorkspace,
-    setIsTourActive
+    setIsTourActive,
+    isLeftPanelOpen,
+    setLeftPanelOpen,
+    isRightPanelOpen,
+    setRightPanelOpen,
+    isBottomDockOpen,
+    setBottomDockOpen
   } = useWorkbenchStore()
 
   // Heartbeat check for backend
@@ -85,6 +91,43 @@ export const TopBar: React.FC = () => {
 
       {/* Right: Actions & Server Health */}
       <div className="flex items-center gap-2">
+        {/* Panel Layout Toggles */}
+        <div className="flex items-center gap-0.5 bg-slate-950/70 p-0.5 rounded-lg border border-slate-800">
+          <button
+            onClick={() => setLeftPanelOpen(!isLeftPanelOpen)}
+            className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+              isLeftPanelOpen
+                ? 'bg-cyan-500/20 text-cyan-300'
+                : 'text-slate-500 hover:text-slate-300'
+            }`}
+            title={isLeftPanelOpen ? "Hide Left Sidebar" : "Show Left Sidebar"}
+          >
+            <PanelLeft className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => setBottomDockOpen(!isBottomDockOpen)}
+            className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+              isBottomDockOpen
+                ? 'bg-cyan-500/20 text-cyan-300'
+                : 'text-slate-500 hover:text-slate-300'
+            }`}
+            title={isBottomDockOpen ? "Hide Bottom Analytics Dock" : "Show Bottom Analytics Dock"}
+          >
+            <PanelBottom className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => setRightPanelOpen(!isRightPanelOpen)}
+            className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+              isRightPanelOpen
+                ? 'bg-cyan-500/20 text-cyan-300'
+                : 'text-slate-500 hover:text-slate-300'
+            }`}
+            title={isRightPanelOpen ? "Hide Right Inspector Panel" : "Show Right Inspector Panel"}
+          >
+            <PanelRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
         {/* Quick Demo Button if no model */}
         {!modelMetadata && (
           <button

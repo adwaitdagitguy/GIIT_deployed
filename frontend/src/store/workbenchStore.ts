@@ -45,6 +45,18 @@ interface WorkbenchState {
   isMappingRunning: boolean
   isTourActive: boolean
   chatMessages: AssistantMessage[]
+  openRouterApiKey: string
+  setOpenRouterApiKey: (key: string) => void
+
+  // Panel Visibility & Layout State
+  isLeftPanelOpen: boolean
+  isRightPanelOpen: boolean
+  isBottomDockOpen: boolean
+  isBottomDockMaximized: boolean
+  setLeftPanelOpen: (open: boolean) => void
+  setRightPanelOpen: (open: boolean) => void
+  setBottomDockOpen: (open: boolean) => void
+  setBottomDockMaximized: (maximized: boolean) => void
 
   // Actions
   setBackendConnected: (status: boolean) => void
@@ -78,7 +90,7 @@ export const useWorkbenchStore = create<WorkbenchState>((set) => ({
   graph: null,
   selectedNodeId: null,
 
-  selectedLayer: "fch.0.weight",
+  selectedLayer: "",
   interventionType: "noise",
   interventionStrength: 0.35,
   interventionResult: null,
@@ -93,11 +105,21 @@ export const useWorkbenchStore = create<WorkbenchState>((set) => ({
   isAnalyzing: false,
   isMappingRunning: false,
   isTourActive: false,
+  openRouterApiKey: "",
+  setOpenRouterApiKey: (key) => set({ openRouterApiKey: key }),
+  isLeftPanelOpen: true,
+  isRightPanelOpen: true,
+  isBottomDockOpen: true,
+  isBottomDockMaximized: false,
+  setLeftPanelOpen: (open) => set({ isLeftPanelOpen: open }),
+  setRightPanelOpen: (open) => set({ isRightPanelOpen: open }),
+  setBottomDockOpen: (open) => set({ isBottomDockOpen: open }),
+  setBottomDockMaximized: (maximized) => set({ isBottomDockMaximized: maximized, isBottomDockOpen: true }),
   chatMessages: [
     {
       id: "1",
       role: "assistant",
-      content: "Welcome to the SciML Intervention Workbench. Load a PINN model or click 'Load Demo Model' to inspect the physics graph and test layer interventions.",
+      content: "Welcome to the SciML Intervention Workbench. Upload a PINN model (.py + .pt + .json) or load the Demo Model to inspect the causal graph and test neural layer interventions.",
       timestamp: new Date().toLocaleTimeString()
     }
   ],
@@ -106,18 +128,20 @@ export const useWorkbenchStore = create<WorkbenchState>((set) => ({
   setIsMockMode: (mock) => set({ isMockMode: mock }),
 
   setModelData: (metadata, graph) =>
-    set((state) => ({
-      sessionId: metadata.sessionId,
-      modelMetadata: metadata,
-      graph: graph || state.graph || mockParsedGraph,
-      selectedLayer: metadata.perturbableTensors[0] || "fch.0.weight",
-      // Initialize an initial baseline trajectory
-      interventionResult: createMockInterventionResult(
-        metadata.perturbableTensors[0] || "fch.0.weight",
-        "noise",
-        0.0
-      )
-    })),
+    set((state) => {
+      const nextGraph = graph || state.graph || null
+      return {
+        sessionId: metadata.sessionId,
+        modelMetadata: metadata,
+        graph: nextGraph,
+        selectedNodeId: nextGraph?.nodes?.[0]?.id || null,
+        selectedLayer: metadata.perturbableTensors[0] || "",
+        interventionResult: null,
+        sweepResult: null,
+        fullAnalysis: null,
+        mapping: null
+      }
+    }),
 
   setGraph: (graph) => set({ graph }),
   setSelectedNodeId: (nodeId) => set({ selectedNodeId: nodeId }),

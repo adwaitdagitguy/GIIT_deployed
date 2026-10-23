@@ -12,6 +12,7 @@ import {
   Play,
   Layers,
   FileJson,
+  PanelLeftClose,
   X
 } from 'lucide-react'
 
@@ -22,6 +23,12 @@ export const Sidebar: React.FC = () => {
     sessionId,
     setModelData,
     setGraph,
+    setInterventionResult,
+    setFullAnalysis,
+    setMapping,
+    setLeftPanelOpen,
+    openRouterApiKey,
+    setOpenRouterApiKey,
     loadDemoModel
   } = useWorkbenchStore()
 
@@ -33,7 +40,6 @@ export const Sidebar: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [isGeneratingRuleset, setIsGeneratingRuleset] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [llmPrompt, setLlmPrompt] = useState("")
   const [showLlmModal, setShowLlmModal] = useState(false)
 
   // File input refs
@@ -52,12 +58,27 @@ export const Sidebar: React.FC = () => {
     setErrorMessage(null)
 
     try {
-      // Upload model, weights, and optional ruleset in one shot
+      // Upload model, weights, and optional graph JSON
       const { metadata, graph: loadedGraph } = await api.uploadModel(modelFile, weightsFile, rulesetFile)
       setModelData(metadata, loadedGraph)
+
+      // Immediately fetch real baseline trajectory, physics analysis, and node mapping from the backend
+      const firstLayer = metadata.perturbableTensors[0]
+      if (firstLayer) {
+        api.runIntervention(metadata.sessionId, firstLayer, 'noise', 0.0)
+          .then((res) => setInterventionResult(res))
+          .catch((e) => console.warn("Initial baseline trajectory error:", e))
+      }
+      api.runFullAnalysis(metadata.sessionId)
+        .then((res) => setFullAnalysis(res))
+        .catch((e) => console.warn("Initial full analysis error:", e))
+      api.runMapping(metadata.sessionId)
+        .then((res) => setMapping(res))
+        .catch((e) => console.warn("Initial node mapping error:", e))
     } catch (err: any) {
       console.error("Load model error:", err)
-      setErrorMessage(err.message || "Failed to load model. Please verify file formats.")
+      const detail = err?.response?.data?.detail || err.message || "Failed to load model. Please verify file formats."
+      setErrorMessage(detail)
     } finally {
       setIsLoading(false)
     }
@@ -74,29 +95,39 @@ export const Sidebar: React.FC = () => {
     setShowLlmModal(false)
 
     try {
-      const generated = await api.generateRuleset(sessionId, llmPrompt)
+      const generated = await api.generateRuleset(sessionId, openRouterApiKey)
       setGraph(generated)
     } catch (err: any) {
-      setErrorMessage("LLM Generation failed: " + err.message)
+      const detail = err?.response?.data?.detail || err.message || "Request failed"
+      setErrorMessage("LLM Generation failed: " + detail)
     } finally {
       setIsGeneratingRuleset(false)
     }
   }
 
   return (
-    <aside className="w-80 h-full bg-slate-900/60 border-r border-slate-800/80 flex flex-col justify-between p-3 select-none overflow-y-auto">
+    <aside className="w-full h-full bg-slate-900/60 flex flex-col justify-between p-3 select-none overflow-y-auto">
       <div className="space-y-4">
         {/* Section Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Layers className="w-4 h-4 text-cyan-400" />
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-200">
+          <div className="flex items-center gap-2 min-w-0">
+            <Layers className="w-4 h-4 text-cyan-400 shrink-0" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-200 truncate">
               PINN Model & Ruleset
             </h2>
           </div>
-          <span className="text-[10px] text-slate-400 bg-slate-800/60 px-1.5 py-0.5 rounded border border-slate-700/60">
-            Step 1
-          </span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-[10px] text-slate-400 bg-slate-800/60 px-1.5 py-0.5 rounded border border-slate-700/60">
+              Step 1
+            </span>
+            <button
+              onClick={() => setLeftPanelOpen(false)}
+              className="p-1 text-slate-400 hover:text-cyan-300 hover:bg-slate-800 rounded transition-colors cursor-pointer"
+              title="Hide Left Sidebar"
+            >
+              <PanelLeftClose className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
         {/* Error notification */}
@@ -315,14 +346,15 @@ export const Sidebar: React.FC = () => {
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed">
-              Uses OpenRouter LLM to parse your PINN architecture code, extract governing ODE/PDE equations, identify parameters (damping, stiffness), and construct a verified causal graph.
+              Uses OpenRouter LLM to synthesize derived physical quantity rulesets from your loaded graph's expected trends. Leave the API key blank if <code className="text-cyan-400">OPENROUTER_API_KEY</code> is already configured on the backend server.
             </p>
 
-            <textarea
-              value={llmPrompt}
-              onChange={(e) => setLlmPrompt(e.target.value)}
-              placeholder="Custom instructions (e.g. 'Target 2nd-order damped harmonic oscillator with mu and k parameters')..."
-              className="w-full h-24 bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-500"
+            <input
+              type="password"
+              value={openRouterApiKey}
+              onChange={(e) => setOpenRouterApiKey(e.target.value)}
+              placeholder="OpenRouter API Key (sk-or-v1-...)"
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-500 font-mono"
             />
 
             <div className="flex justify-end gap-2 pt-2">

@@ -9,7 +9,7 @@ export interface GraphNode {
   description?: string
   formula?: string
   default_value?: number
-  expected_sensitivity_sign?: "+" | "-"
+  expected_sensitivity_sign?: string
   trend?: string
 }
 
@@ -127,8 +127,8 @@ export interface SweepResult {
 export interface SensitivityItem {
   parameter: string
   label: string
-  gradSign: "+" | "-" | "0"
-  expectedSign: "+" | "-"
+  gradSign: string
+  expectedSign: string
   consistent: boolean
   magnitude: number
   description?: string
@@ -141,7 +141,7 @@ export interface NodeLayerMapping {
   mappedLayer: string
   confidence: number
   alignmentPct: number
-  strategy: "trend-matching" | "gradient-sensitivity" | "direct-coupling"
+  strategy: string
 }
 
 export interface FullAnalysisResult {

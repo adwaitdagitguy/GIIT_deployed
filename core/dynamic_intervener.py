@@ -313,6 +313,16 @@ def serialize_intervention_result(
     baseline_pred = np.asarray(result["baseline_pred"])
     intervened_pred = np.asarray(result["intervened_pred"])
     diff = intervened_pred - baseline_pred
+    abs_diff = np.abs(diff)
+
+    x_values = None
+    if input_tensor is not None:
+        inp_np = input_tensor.detach().cpu().numpy()
+        x_values = (inp_np[:, 0] if inp_np.ndim > 1 else inp_np).ravel().tolist()
+
+    ground_truth = None
+    if target_tensor is not None:
+        ground_truth = target_tensor.detach().cpu().numpy().ravel().tolist()
 
     return {
         "layer":                     result["layer"],
@@ -324,10 +334,15 @@ def serialize_intervention_result(
         "intervened_mse":            float(result["intervened_mse"]),
         "mse_delta":                 float(result["delta"]),
         "mse_percent_change":        float(result["percent_change"]),
+        "x_values":                  x_values,
         "trajectory_baseline":       baseline_pred.ravel().tolist(),
         "trajectory_intervened":     intervened_pred.ravel().tolist(),
+        "trajectory_ground_truth":   ground_truth,
         "trajectory_variance":       float(np.var(diff)),
-        "trajectory_mean_deviation": float(np.mean(np.abs(diff))),
+        "trajectory_mean_deviation": float(np.mean(abs_diff)),
+        "max_divergence":            float(np.max(abs_diff)) if abs_diff.size > 0 else 0.0,
+        "rmse":                      float(np.sqrt(np.mean(diff ** 2))) if diff.size > 0 else 0.0,
+        "mae":                       float(np.mean(abs_diff)) if abs_diff.size > 0 else 0.0,
     }
 
 
@@ -387,6 +402,7 @@ def serialize_sweep_result(sweep: dict) -> dict:
             "trajectory_intervened":     intervened_pred.ravel().tolist(),
             "trajectory_variance":       float(step["trajectory_variance"]),
             "trajectory_mean_deviation": float(step["trajectory_mean_deviation"]),
+            "max_divergence":            float(np.max(np.abs(diff))) if diff.size > 0 else 0.0,
         })
 
     return {

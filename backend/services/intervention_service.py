@@ -90,6 +90,8 @@ def run_single_intervention(
     # Use existing serialization helper
     serialized = serialize_intervention_result(
         result=raw_result,
+        input_tensor=session.test_inputs,
+        target_tensor=session.test_targets,
         l2_baseline=baseline_l2,
         l2_intervened=intervened_l2,
     )

@@ -149,22 +149,22 @@ export const GraphCanvas: React.FC = () => {
           <Info className="w-3 h-3 text-cyan-400" /> Legend:
         </span>
         <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">
-          Input (t)
+          Input
         </span>
         <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
           Latent Layer
         </span>
         <span className="px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-          ODE Param (μ, k)
+          Parameter
         </span>
         <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-          Derivative (ẏ, ÿ)
+          Derivative / State
         </span>
         <span className="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
-          Loss Residual (f)
+          Loss Residual
         </span>
         <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-          Output (y)
+          Output
         </span>
       </div>
 

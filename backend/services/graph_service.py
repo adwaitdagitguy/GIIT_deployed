@@ -52,6 +52,8 @@ def get_react_flow_graph(session_id: str) -> dict:
 
     # 2. Assign deterministic layout positions
     raw_nodes = graph_data.get("nodes", [])
+    parameters = graph_data.get("parameters", {})
+    expected_trends = graph_data.get("expected_trends", {})
     col_counters = {0: 0, 1: 0, 2: 0, 3: 0}
 
     nodes = []
@@ -60,12 +62,14 @@ def get_react_flow_graph(session_id: str) -> dict:
             node_id = node.get("id", node.get("name", ""))
             node_label = node.get("label", node_id)
             node_type = node.get("type", "state")
-            node_symbol = node.get("symbol", "")
+            node_symbol = node.get("symbol", node_id)
+            raw_dict = node
         else:
             node_id = str(node)
             node_label = str(node)
             node_type = "state"
-            node_symbol = ""
+            node_symbol = str(node)
+            raw_dict = {}
 
         if not node_id:
             continue
@@ -78,6 +82,23 @@ def get_react_flow_graph(session_id: str) -> dict:
         pos_y = row * _ROW_Y_SPACING + 50
 
         expl = explanations.get(node_id, {})
+        param_info = parameters.get(node_id, {}) or parameters.get(node_symbol, {})
+
+        expl_formula = expl.get("formula")
+        if expl_formula == "Not specified in graph metadata":
+            expl_formula = None
+
+        formula = raw_dict.get("formula") or param_info.get("formula") or expl_formula
+        description = raw_dict.get("description") or param_info.get("description") or expl.get("description")
+        unit = raw_dict.get("unit") or param_info.get("unit")
+        default_val = raw_dict.get("default_value") if "default_value" in raw_dict else param_info.get("default_value")
+        expected_sign = raw_dict.get("expected_sensitivity_sign") or param_info.get("expected_sensitivity_sign")
+        trend = (
+            raw_dict.get("trend")
+            or param_info.get("trend")
+            or expected_trends.get(node_label)
+            or expected_trends.get(node_id)
+        )
 
         nodes.append({
             "id": node_id,
@@ -85,6 +106,13 @@ def get_react_flow_graph(session_id: str) -> dict:
             "data": {
                 "label": node_label,
                 "symbol": node_symbol,
+                "type": node_type,
+                "unit": unit,
+                "description": description,
+                "formula": formula,
+                "default_value": default_val,
+                "expected_sensitivity_sign": expected_sign,
+                "trend": trend,
                 "explanation": expl,
             },
             "position": {"x": float(pos_x), "y": float(pos_y)},
@@ -97,8 +125,10 @@ def get_react_flow_graph(session_id: str) -> dict:
         if isinstance(e, dict):
             src = e.get("source", "")
             tgt = e.get("target", "")
+            lbl = e.get("label", "")
         elif isinstance(e, (list, tuple)) and len(e) >= 2:
             src, tgt = str(e[0]), str(e[1])
+            lbl = str(e[2]) if len(e) >= 3 else ""
         else:
             continue
 
@@ -106,6 +136,7 @@ def get_react_flow_graph(session_id: str) -> dict:
             "id": f"e-{src}-{tgt}-{idx}",
             "source": src,
             "target": tgt,
+            "label": lbl,
             "animated": False,
         })
 

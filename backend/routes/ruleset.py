@@ -9,10 +9,13 @@ from backend.schemas.ruleset_schema import (
     RulesetUploadResponse,
     RulesetGenerateRequest,
     RulesetGenerateResponse,
+    AssistantChatRequest,
+    AssistantChatResponse,
 )
 from backend.services.ruleset_service import (
     handle_ruleset_upload,
     handle_ruleset_generate,
+    handle_assistant_chat,
 )
 
 router = APIRouter(prefix="/api/ruleset", tags=["Ruleset"])
@@ -49,3 +52,22 @@ async def generate_ruleset(request: RulesetGenerateRequest):
         raise HTTPException(status_code=404, detail=f"Session '{request.session_id}' not found.")
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Ruleset generation failed: {exc}")
+
+
+@router.post("/chat", response_model=AssistantChatResponse)
+async def assistant_chat(request: AssistantChatRequest):
+    """
+    Route an AI Physics Assistant query through OpenRouter (openrouter/free).
+    """
+    try:
+        return handle_assistant_chat(
+            message=request.message,
+            api_key=request.api_key,
+            session_id=request.session_id,
+            history=request.history,
+            client_context=request.context,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Assistant chat failed: {exc}")

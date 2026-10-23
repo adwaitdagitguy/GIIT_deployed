@@ -24,8 +24,9 @@ import torch
 
 from backend.routes.model import router as model_router
 from backend.routes.graph import router as graph_router
-from backend.routes.ruleset import router as ruleset_router
+from backend.routes.ruleset import router as ruleset_router, assistant_chat
 from backend.routes.intervention import router as intervention_router
+from backend.schemas.ruleset_schema import AssistantChatRequest, AssistantChatResponse
 from backend.session_manager import session_store
 
 app = FastAPI(
@@ -90,3 +91,9 @@ async def delete_session(session_id: str):
     """Release in-memory session data for a given session ID."""
     session_store.delete(session_id)
     return {"session_id": session_id, "deleted": True}
+
+
+@app.post("/api/assistant/chat", response_model=AssistantChatResponse, tags=["Assistant"])
+async def chat_endpoint(request: AssistantChatRequest):
+    """Route AI Physics Assistant query through OpenRouter (openrouter/free)."""
+    return await assistant_chat(request)

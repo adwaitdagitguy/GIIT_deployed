@@ -9,7 +9,13 @@ Wraps existing functions from:
 """
 
 import json
-from core.llm_engine import generate_physics_ruleset, validate_physics_ruleset
+import os
+from core.llm_engine import (
+    DEFAULT_MODEL,
+    generate_physics_ruleset,
+    validate_physics_ruleset,
+    chat_with_physics_assistant,
+)
 from backend.session_manager import session_store
 
 
@@ -66,9 +72,12 @@ def handle_ruleset_generate(session_id: str, api_key: str) -> dict:
     """
     session = session_store.get(session_id)
     graph = session.graph_data
+    resolved_key = api_key or os.environ.get("OPENROUTER_API_KEY", "")
+    if not resolved_key:
+        raise ValueError("OpenRouter API key is required (pass in request or set OPENROUTER_API_KEY env var).")
 
     # Generate ruleset using existing core/llm_engine.py function
-    ruleset_dict = generate_physics_ruleset(graph=graph, api_key=api_key)
+    ruleset_dict = generate_physics_ruleset(graph=graph, api_key=resolved_key)
 
     # Attach to intervener
     session.intervener.set_physics_ruleset(ruleset_dict)
@@ -87,4 +96,47 @@ def handle_ruleset_generate(session_id: str, api_key: str) -> dict:
         "quantities": quantities,
         "ruleset": ruleset_dict,
         "attached": True,
+    }
+
+
+def handle_assistant_chat(
+    message: str,
+    api_key: str,
+    session_id: str = None,
+    history: list = None,
+    client_context: dict = None,
+) -> dict:
+    """
+    Route an AI Physics Assistant query through OpenRouter (`openrouter/free`),
+    enriching the prompt with the active PINN session's graph, architecture,
+    and analysis results when a valid session_id is present.
+    """
+    resolved_key = (api_key or "").strip() or os.environ.get("OPENROUTER_API_KEY", "")
+    if not resolved_key:
+        raise ValueError("Please provide an OpenRouter API key in the AI Assistant panel.")
+
+    merged_context = dict(client_context or {})
+    if session_id:
+        try:
+            session = session_store.get(session_id)
+            merged_context["session_metadata"] = session.graph_data.get("metadata", {})
+            merged_context["graph_nodes"] = session.graph_data.get("nodes", [])
+            merged_context["graph_edges"] = session.graph_data.get("edges", [])
+            merged_context["residual_spec"] = session.graph_data.get("residual", {})
+            merged_context["architecture"] = session.architecture_summary
+            if session.baseline_metrics:
+                merged_context["baseline_metrics"] = session.baseline_metrics
+        except KeyError:
+            pass
+
+    reply = chat_with_physics_assistant(
+        user_message=message,
+        api_key=resolved_key,
+        context=merged_context,
+        history=history,
+        model_name=DEFAULT_MODEL,
+    )
+    return {
+        "reply": reply,
+        "model": DEFAULT_MODEL,
     }

@@ -4,6 +4,7 @@ model.py
 FastAPI router for model upload and architecture metadata endpoints.
 """
 
+from typing import Optional
 from fastapi import APIRouter, File, UploadFile, HTTPException, Query
 from backend.schemas.model_schema import ModelUploadResponse, ArchitectureSummary
 from backend.services.model_service import handle_model_upload, get_architecture_summary
@@ -15,10 +16,10 @@ router = APIRouter(prefix="/api/model", tags=["Model"])
 async def upload_model(
     model_py: UploadFile = File(..., description="PyTorch model definition (.py)"),
     model_pt: UploadFile = File(..., description="Trained model weights (.pt)"),
-    graph_json: UploadFile = File(..., description="Causal graph specification (.json)"),
+    graph_json: Optional[UploadFile] = File(None, description="Optional causal graph specification (.json)"),
 ):
     """
-    Upload a PINN model definition, weights, and causal graph JSON.
+    Upload a PINN model definition, weights, and optional causal graph JSON.
 
     Initializes the AST-sanitized model, generates test data, constructs
     the dynamic intervener, and registers the session.
@@ -26,7 +27,7 @@ async def upload_model(
     try:
         py_bytes = await model_py.read()
         pt_bytes = await model_pt.read()
-        graph_bytes = await graph_json.read()
+        graph_bytes = await graph_json.read() if graph_json is not None else None
 
         result = handle_model_upload(
             py_bytes=py_bytes,
